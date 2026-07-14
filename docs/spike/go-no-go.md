@@ -30,4 +30,4 @@ None.
 ## Sign-off
 
 - Spike owner: dhos3 automation (2026-07-14)
-- Reviewer: pending human review before Path B coding starts
+- Reviewer: **approved GO** (2026-07-14) — proceed to Path B / ADR
