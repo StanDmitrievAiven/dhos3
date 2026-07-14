@@ -9,3 +9,6 @@
 spike/java/.gradle/
 spike/java/build/
 *.log
+spike/java/.gradle/
+spike/java/build/
+spike/java/.gradle

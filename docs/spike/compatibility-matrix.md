@@ -6,14 +6,14 @@
 
 | ID | Area | Operation | OS2 baseline (DataHub) | Local OS3 | Aiven OS3 | Notes / API used |
 |---|---|---|---|---|---|---|
-| P01 | Cluster | info/version | PASS | | | |
-| P02 | Cluster | health | PASS | | | |
-| P03 | Cluster | settings get/update | PASS | | | |
-| P04 | Index | create/mappings/delete | PASS | | | |
-| P05 | Index | settings `index.knn` | PASS | | | |
-| P06 | Index | aliases | PASS | | | |
-| P07 | Index | refresh | PASS | | | |
-| P08 | Doc | index/get/delete | PASS | | | |
+| P01 | Cluster | info/version | PASS | PASS (3.7.0) | TBD | `opensearch-java` InfoResponse |
+| P02 | Cluster | health | PASS | PASS (green) | TBD | |
+| P03 | Cluster | settings get/update | PASS | TBD | TBD | |
+| P04 | Index | create/mappings/delete | PASS | PASS | TBD | combined with P08 probe |
+| P05 | Index | settings `index.knn` | PASS | TBD | TBD | |
+| P06 | Index | aliases | PASS | TBD | TBD | |
+| P07 | Index | refresh | PASS | TBD | TBD | |
+| P08 | Doc | index/get/delete | PASS | PASS | TBD | |
 | P09 | Doc | bulk | PASS | | | |
 | P10 | Search | bool + aggs | PASS | | | |
 | P11 | Search | scroll | PASS | | | |
