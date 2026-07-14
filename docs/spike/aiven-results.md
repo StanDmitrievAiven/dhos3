@@ -6,19 +6,30 @@
 
 | Probe ID | Result | Notes |
 |---|---|---|
-| P01 | PASS | distribution=opensearch number=3.6.0 |
-| P02 | PASS | status=Green nodes=1 |
-| P04/P08 | PASS | create index + document CRUD round-trip |
-| P03, P05–P07, P09–P24 | TBD | not implemented in harness yet |
+| P01 | PASS | 3.6.0 |
+| P02 | PASS | green |
+| P03 | PASS | settings get |
+| P04/P08 | PASS | |
+| P05 | PASS | index.knn + knn_vector |
+| P06 | PASS | |
+| P07 | PASS | |
+| P09 | PASS | |
+| P10 | PASS | |
+| P11 | PASS | |
+| P12 | PASS | PIT |
+| P13 | PASS | |
+| P14 | PASS | |
+| P15 | PASS | reindex |
+| P16–P20 | PASS (P18 PARTIAL) | nested knn OK; in-knn filter empty; bool filter OK |
+| P21 | PASS | deprecated knn index setting rejected |
+| P22–P24 | PASS | HC5 + basic auth + TLS |
 
 ## TLS / auth
 
 - Scheme: HTTPS + basic auth
-- Client: `opensearch-java:3.7.0` over Apache HttpClient 5 with trust-all TLS (spike only)
-- Local spike image remains pinned at 3.7.0; Aiven service is **3.6.0** — both accepted by `version.startsWith("3.")`
+- Client: `opensearch-java:3.7.0` + HC5 (spike trust-all)
 
 ## Follow-ups
 
-- Expand remaining probes against Aiven 3.6
-- Consider dual-pin note in ADR: validate against min(3.6) and latest(3.7+)
-- Rotate test credentials if this chat/log is retained long-term
+- Path B delta D1: verify DataHub in-knn filter JSON on OS3
+- Human sign-off on `go-no-go.md` before submodule implementation

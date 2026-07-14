@@ -1,6 +1,7 @@
 package io.aiven.dhos3.spike.probes;
 
 import io.aiven.dhos3.spike.Probe;
+import io.aiven.dhos3.spike.ProbeContext;
 import io.aiven.dhos3.spike.ProbeResult;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch.core.InfoResponse;
@@ -8,7 +9,8 @@ import org.opensearch.client.opensearch.core.InfoResponse;
 /** P01 — cluster info / version. */
 public final class ClusterInfoProbe implements Probe {
   @Override
-  public ProbeResult run(OpenSearchClient client) throws Exception {
+  public ProbeResult run(ProbeContext ctx) throws Exception {
+    OpenSearchClient client = ctx.client();
     InfoResponse info = client.info();
     String number = info.version().number();
     String distribution =
@@ -17,9 +19,7 @@ public final class ClusterInfoProbe implements Probe {
       return ProbeResult.fail(
           "P01", "cluster info/version", "expected 3.x version, got number=" + number);
     }
-    if (!"opensearch".equalsIgnoreCase(distribution)
-        && info.tagline() != null
-        && info.tagline().toLowerCase().contains("you know")) {
+    if (info.tagline() != null && info.tagline().toLowerCase().contains("you know")) {
       return ProbeResult.fail(
           "P01", "cluster info/version", "appears to be Elasticsearch: " + info.tagline());
     }

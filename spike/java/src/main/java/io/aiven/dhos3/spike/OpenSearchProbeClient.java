@@ -1,8 +1,8 @@
 package io.aiven.dhos3.spike;
 
-import java.net.URI;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
@@ -17,34 +17,31 @@ import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.transport.OpenSearchTransport;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
 
-/** Builds an {@link OpenSearchClient} from OPENSEARCH_* or AIVEN_OPENSEARCH_* env vars. */
+/** Builds an {@link OpenSearchClient} from OPENSEARCH_* env vars. */
 public final class OpenSearchProbeClient implements AutoCloseable {
 
   private final OpenSearchTransport transport;
-  private final OpenSearchClient client;
-  private final String endpointDescription;
+  private final ProbeContext context;
 
-  private OpenSearchProbeClient(
-      OpenSearchTransport transport, OpenSearchClient client, String endpointDescription) {
+  private OpenSearchProbeClient(OpenSearchTransport transport, ProbeContext context) {
     this.transport = transport;
-    this.client = client;
-    this.endpointDescription = endpointDescription;
+    this.context = context;
+  }
+
+  public ProbeContext context() {
+    return context;
   }
 
   public OpenSearchClient client() {
-    return client;
+    return context.client();
   }
 
   public String endpointDescription() {
-    return endpointDescription;
+    return context.endpoint();
   }
 
   public static OpenSearchProbeClient fromEnv() throws Exception {
-    String prefix = env("OPENSEARCH_HOST").isPresent() ? "OPENSEARCH" : "AIVEN_OPENSEARCH";
-    if (env(prefix + "_HOST").isEmpty()) {
-      prefix = "OPENSEARCH";
-    }
-    return fromPrefix(prefix);
+    return fromPrefix("OPENSEARCH");
   }
 
   public static OpenSearchProbeClient fromPrefix(String prefix) throws Exception {
@@ -54,6 +51,7 @@ public final class OpenSearchProbeClient implements AutoCloseable {
         Boolean.parseBoolean(required(prefix + "_USE_SSL", "false").toLowerCase(Locale.ROOT));
     String username = env(prefix + "_USERNAME").orElse("");
     String password = env(prefix + "_PASSWORD").orElse("");
+    boolean hasBasicAuth = !username.isBlank();
 
     String scheme = useSsl ? "https" : "http";
     HttpHost httpHost = new HttpHost(scheme, host, port);
@@ -63,7 +61,7 @@ public final class OpenSearchProbeClient implements AutoCloseable {
 
     builder.setHttpClientConfigCallback(
         (HttpAsyncClientBuilder httpClientBuilder) -> {
-          if (!username.isBlank()) {
+          if (hasBasicAuth) {
             BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
             credentialsProvider.setCredentials(
                 new AuthScope(httpHost),
@@ -97,7 +95,12 @@ public final class OpenSearchProbeClient implements AutoCloseable {
     OpenSearchTransport transport = builder.build();
     OpenSearchClient client = new OpenSearchClient(transport);
     String desc = scheme + "://" + host + ":" + port;
-    return new OpenSearchProbeClient(transport, client, desc);
+    return new OpenSearchProbeClient(
+        transport, new ProbeContext(client, desc, useSsl, hasBasicAuth));
+  }
+
+  public static String newIndex(String prefix) {
+    return prefix + "-" + UUID.randomUUID().toString().substring(0, 8);
   }
 
   private static String required(String key, String defaultValue) {

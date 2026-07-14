@@ -6,19 +6,20 @@ import io.aiven.dhos3.spike.ProbeContext;
 import io.aiven.dhos3.spike.ProbeResult;
 import java.util.Map;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.Refresh;
 import org.opensearch.client.opensearch._types.mapping.Property;
 import org.opensearch.client.opensearch._types.mapping.TypeMapping;
-import org.opensearch.client.opensearch.core.IndexRequest;
+import org.opensearch.client.opensearch.core.CountResponse;
+import org.opensearch.client.opensearch.core.ExplainResponse;
 import org.opensearch.client.opensearch.indices.CreateIndexRequest;
 import org.opensearch.client.opensearch.indices.DeleteIndexRequest;
-import org.opensearch.client.opensearch.indices.ExistsRequest;
 
-/** P04 + P08 — create index, document CRUD, delete index. */
-public final class IndexDocumentProbe implements Probe {
+/** P13 — count + explain. */
+public final class CountExplainProbe implements Probe {
   @Override
   public ProbeResult run(ProbeContext ctx) throws Exception {
     OpenSearchClient client = ctx.client();
-    String index = OpenSearchProbeClient.newIndex("dhos3-spike");
+    String index = OpenSearchProbeClient.newIndex("dhos3-count");
     try {
       client
           .indices()
@@ -29,33 +30,33 @@ public final class IndexDocumentProbe implements Probe {
                           .mappings(
                               TypeMapping.of(
                                   m -> m.properties("title", Property.of(p -> p.text(t -> t)))))));
-
-      boolean exists = client.indices().exists(ExistsRequest.of(e -> e.index(index))).value();
-      if (!exists) {
-        return ProbeResult.fail("P04", "create index", "exists=false after create");
-      }
-
       client.index(
-          IndexRequest.of(
-              i ->
-                  i.index(index)
+          i ->
+              i.index(index)
+                  .id("1")
+                  .document(Map.of("title", "hello world"))
+                  .refresh(Refresh.True));
+
+      CountResponse count = client.count(c -> c.index(index).query(q -> q.matchAll(m -> m)));
+      ExplainResponse<Map> explain =
+          client.explain(
+              e ->
+                  e.index(index)
                       .id("1")
-                      .document(Map.of("title", "hello dhos3"))
-                      .refresh(org.opensearch.client.opensearch._types.Refresh.True)));
+                      .query(q -> q.match(m -> m.field("title").query(fv -> fv.stringValue("hello")))),
+              Map.class);
 
-      var get = client.get(g -> g.index(index).id("1"), Map.class);
-      if (!get.found()) {
-        return ProbeResult.fail("P08", "index/get/delete document", "document not found");
+      if (count.count() < 1) {
+        return ProbeResult.fail("P13", "count/explain", "count=" + count.count());
       }
-
-      client.delete(d -> d.index(index).id("1"));
       return ProbeResult.pass(
-          "P04/P08", "create index + document CRUD", "index=" + index + " round-trip ok");
+          "P13",
+          "count/explain",
+          "count=" + count.count() + " matched=" + explain.matched());
     } finally {
       try {
         client.indices().delete(DeleteIndexRequest.of(d -> d.index(index).ignoreUnavailable(true)));
       } catch (Exception ignored) {
-        // best-effort cleanup
       }
     }
   }
