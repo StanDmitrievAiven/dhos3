@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+**/build/
+**/.gradle/
+**/.idea/
+**/*.iml
+.DS_Store
+spike/java/.gradle/
+spike/java/build/
+*.log
