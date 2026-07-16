@@ -10,10 +10,24 @@ DataHub OSS today supports OpenSearch **2.x** only (`OpenSearch2SearchClientShim
 2. **Design + plan + tickets** — contribution-ready architecture  
 3. **Path B implementation** — in a DataHub git submodule using `opensearch-java`
 
+## Team review (pre-upstream)
+
+Share this pack with colleagues **before** opening anything on `datahub-project/datahub`:
+
+→ **[docs/TEAM_REVIEW.md](docs/TEAM_REVIEW.md)** — clone instructions, RFC, validation, fork branch links.
+
+| Repo | Link |
+|---|---|
+| This workspace | https://github.com/StanDmitrievAiven/dhos3 |
+| DataHub fork (B1 shim) | https://github.com/StanDmitrievAiven/datahub/tree/feat/opensearch-3-shim |
+
 ## Documents
 
 | Doc | Purpose |
 |---|---|
+| [Team review pack](docs/TEAM_REVIEW.md) | Where to start for internal review |
+| [RFC draft](docs/rfcs/draft-opensearch-3-support.md) | Upstream-shaped RFC (local only) |
+| [Aiven OS3 validation](docs/superpowers/plans/2026-07-16-os3-support-validation.md) | Live stack evidence |
 | [Design spec](docs/specs/2026-07-14-opensearch3-datahub-design.md) | Goals, decisions, architecture |
 | [Implementation plan](docs/plans/2026-07-14-opensearch3-datahub-implementation.md) | Phased tasks with checkboxes |
 | [Epic backlog](docs/tickets/epic-backlog.md) | Ticket catalog |

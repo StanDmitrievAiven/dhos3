@@ -1,3 +1,1 @@
 dff672be9391ad0278111281e13bd4f2690c623d
-feat/opensearch-3-shim @ StanDmitrievAiven/datahub
-B1: OPENSEARCH_3 + D1 knn + Testcontainers IT + Aiven smoke

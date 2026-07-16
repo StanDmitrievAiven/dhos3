@@ -1,10 +1,14 @@
 # vendor/
 
-`datahub/` is added as a git submodule pointing at https://github.com/datahub-project/datahub
+`datahub/` is a git submodule. For this workspace it points at the **Aiven fork** so the OpenSearch 3 shim branch is fetchable for team review:
+
+- URL: https://github.com/StanDmitrievAiven/datahub.git  
+- Branch: `feat/opensearch-3-shim`  
+- Upstream (do not PR from here until review): https://github.com/datahub-project/datahub  
 
 ```bash
-git submodule add https://github.com/datahub-project/datahub.git vendor/datahub
-git -C vendor/datahub rev-parse HEAD > docs/spike/datahub-pin.txt
+git submodule update --init --recursive
+git -C vendor/datahub log -1 --oneline
 ```
 
-Path B implementation happens on a feature branch **inside** the submodule. Update `docs/spike/datahub-pin.txt` when you intentionally move the pin.
+Path B implementation lives **inside** the submodule. Update `docs/spike/datahub-pin.txt` when you intentionally move the pin.

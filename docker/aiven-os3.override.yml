@@ -1,0 +1,86 @@
+# Compose override: DataHub debug profile + Aiven OpenSearch 3 (no local search).
+# Used by scripts/quickstart-aiven-os3.sh — keep secrets in OS3D/.env (gitignored).
+#
+# Requires env: AIVEN_OPENSEARCH_HOST, AIVEN_OPENSEARCH_PORT, AIVEN_OPENSEARCH_USERNAME,
+# AIVEN_OPENSEARCH_PASSWORD (and optional DATAHUB_TOKEN_SERVICE_*).
+
+x-aiven-search-env: &aiven-search-env
+  ELASTICSEARCH_HOST: ${AIVEN_OPENSEARCH_HOST}
+  ELASTICSEARCH_PORT: ${AIVEN_OPENSEARCH_PORT:-443}
+  ELASTICSEARCH_USE_SSL: "true"
+  ELASTICSEARCH_PROTOCOL: https
+  ELASTICSEARCH_USERNAME: ${AIVEN_OPENSEARCH_USERNAME}
+  ELASTICSEARCH_PASSWORD: ${AIVEN_OPENSEARCH_PASSWORD}
+  ELASTICSEARCH_IMPLEMENTATION: opensearch
+  ELASTICSEARCH_SHIM_ENABLED: "true"
+  ELASTICSEARCH_SHIM_ENGINE_TYPE: OPENSEARCH_3
+  ELASTICSEARCH_SHIM_AUTO_DETECT: "false"
+  # Single-node Aiven: avoid replica shards eating the cluster shard budget
+  ELASTICSEARCH_NUM_SHARDS_PER_INDEX: "1"
+  ELASTICSEARCH_NUM_REPLICAS_PER_INDEX: "0"
+
+x-gms-perf-env: &gms-perf-env
+  <<: *aiven-search-env
+  # GMS embeds MAE/MCE consumers in debug-min — 1g was GC-thrashing under loadtest
+  JAVA_OPTS: "-Xms4g -Xmx4g"
+  # Single-broker Kafka: RF must stay 1 (RF>1 cannot be satisfied)
+  REPLICATION_FACTOR: "1"
+  PARTITIONS: "12"
+  SEARCH_SERVICE_ENABLE_CACHE: "true"
+  # Local Ollama (host) — nomic-embed-text @ 768d; GMS query embedder + semantic indices
+  ELASTICSEARCH_SEMANTIC_SEARCH_ENABLED: "true"
+  SEARCH_SERVICE_SEMANTIC_SEARCH_ENABLED: "true"
+  ELASTICSEARCH_SEMANTIC_SEARCH_ENTITIES: "document"
+  EMBEDDING_PROVIDER_TYPE: "local"
+  LOCAL_EMBEDDING_ENDPOINT: "http://host.docker.internal:11434/v1/embeddings"
+  LOCAL_EMBEDDING_MODEL: "nomic-embed-text"
+  LOCAL_EMBEDDING_VECTOR_DIMENSION: "768"
+
+services:
+  # Satisfy depends_on healthchecks; traffic goes to Aiven via env overrides below.
+  opensearch:
+    image: alpine:3.20
+    hostname: search
+    entrypoint: ["sleep", "infinity"]
+    environment: !reset {}
+    volumes: !reset []
+    ports: !reset []
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 5s
+      timeout: 2s
+      retries: 1
+      start_period: 0s
+
+  # Single-node Kafka: RF=1 is required; bump heap + IO for ingest catch-up
+  kafka-broker:
+    environment:
+      KAFKA_HEAP_OPTS: "-Xms2g -Xmx2g"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_MIN_INSYNC_REPLICAS: "1"
+      KAFKA_DEFAULT_REPLICATION_FACTOR: "1"
+      KAFKA_NUM_PARTITIONS: "12"
+      KAFKA_NUM_NETWORK_THREADS: "8"
+      KAFKA_NUM_IO_THREADS: "16"
+      KAFKA_MESSAGE_MAX_BYTES: "5242880"
+      KAFKA_REPLICA_FETCH_MAX_BYTES: "5242880"
+
+  system-update-debug:
+    environment:
+      <<: *gms-perf-env
+
+  # Full debug profile
+  datahub-gms-debug:
+    environment:
+      <<: *gms-perf-env
+
+  datahub-actions-debug:
+    environment:
+      <<: *aiven-search-env
+
+  # debug-min profile (no actions — preferred for first OS3 smoke)
+  datahub-gms-debug-min:
+    environment:
+      <<: *gms-perf-env

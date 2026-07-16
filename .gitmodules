@@ -1,3 +1,4 @@
 [submodule "vendor/datahub"]
 	path = vendor/datahub
-	url = https://github.com/datahub-project/datahub.git
+	url = https://github.com/StanDmitrievAiven/datahub.git
+	branch = feat/opensearch-3-shim
